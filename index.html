@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlgoReview - Algorithm Mapping Tool</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Highlight.js for code syntax -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <header class="py-3 border-bottom">
+            <div class="d-flex flex-column flex-md-row align-items-center justify-content-between">
+                <h1 class="h3 mb-2 mb-md-0">
+                    <i class="bi bi-diagram-3"></i> AlgoReview
+                </h1>
+                <p class="text-muted mb-0">Map algorithm problems to keywords and solutions</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="row mt-4">
+            <!-- Left Panel: Keywords to Problems -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="h5 mb-0">
+                            <i class="bi bi-tags"></i> Keywords → Problems
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="keywordSearch" class="form-label">Search Keywords</label>
+                            <input type="text" class="form-control" id="keywordSearch" placeholder="e.g., DP, Monotonic Queue">
+                        </div>
+                        <div class="list-group" id="keywordList">
+                            <!-- Keywords will be loaded here -->
+                            <div class="text-center py-5 text-muted">
+                                <div class="spinner-border spinner-border-sm" role="status"></div>
+                                <span class="ms-2">Loading keywords...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Problem Details -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="h5 mb-0">
+                            <i class="bi bi-file-code"></i> Problem Details
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="problemDetailPlaceholder" class="text-center py-5 text-muted">
+                            <i class="bi bi-arrow-left-circle display-6"></i>
+                            <p class="mt-3">Select a keyword or problem to view details</p>
+                        </div>
+                        <div id="problemDetail" class="d-none">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4 id="problemTitle" class="h4">Problem Title</h4>
+                                    <p id="problemId" class="text-muted mb-1"></p>
+                                </div>
+                                <button id="editProblemBtn" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                            </div>
+                            <div class="mb-3">
+                                <h5 class="h6">Description</h5>
+                                <div id="problemDescription" class="border rounded p-3 bg-light"></div>
+                            </div>
+                            <div class="mb-3">
+                                <h5 class="h6">Keywords</h5>
+                                <div id="problemKeywords" class="d-flex flex-wrap gap-2"></div>
+                            </div>
+                            <div>
+                                <h5 class="h6">Solution Code</h5>
+                                <pre class="border rounded p-3 bg-dark text-light"><code id="problemCode" class="language-python"></code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Entry Section -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="h5 mb-0">
+                            <i class="bi bi-plus-circle"></i> Add New Entry
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <form id="addForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="problemIdInput" class="form-label">Problem ID (e.g., 1425)</label>
+                                    <input type="number" class="form-control" id="problemIdInput" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="problemTitleInput" class="form-label">Problem Title</label>
+                                    <input type="text" class="form-control" id="problemTitleInput" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="problemDescriptionInput" class="form-label">Problem Description</label>
+                                <textarea class="form-control" id="problemDescriptionInput" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="keywordsInput" class="form-label">Keywords (comma-separated)</label>
+                                <input type="text" class="form-control" id="keywordsInput" placeholder="e.g., DP, Monotonic Queue" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="codeInput" class="form-label">Solution Code</label>
+                                <textarea class="form-control font-monospace" id="codeInput" rows="8" required></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Save Entry
+                                </button>
+                                <button type="button" id="clearFormBtn" class="btn btn-outline-secondary">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-5 py-3 border-top text-center text-muted">
+            <p class="mb-0">
+                AlgoReview &copy; 2026 | 
+                <a href="https://github.com/deciding/AlgoReview" class="text-decoration-none" target="_blank">
+                    <i class="bi bi-github"></i> View on GitHub
+                </a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Modal for Editing -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Problem</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <input type="hidden" id="editProblemId">
+                        <div class="mb-3">
+                            <label for="editTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="editTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="editDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editKeywords" class="form-label">Keywords</label>
+                            <input type="text" class="form-control" id="editKeywords" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editCode" class="form-label">Code</label>
+                            <textarea class="form-control font-monospace" id="editCode" rows="8" required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="deleteProblemBtn">Delete</button>
+                    <button type="button" class="btn btn-primary" id="saveEditBtn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
