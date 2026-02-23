@@ -172,7 +172,66 @@ document.addEventListener('DOMContentLoaded', function() {
         currentProblemId = null;
     }
     
+    // Fetch problem data from LeetCode
+    async function fetchProblemFromLeetCode(problemId) {
+        if (!problemId || problemId < 1) {
+            showToast('Please enter a valid problem ID', 'warning');
+            return;
+        }
+        
+        const fetchBtn = document.getElementById('fetchFromLeetCodeBtn');
+        const originalText = fetchBtn.innerHTML;
+        
+        try {
+            // Show loading state
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Fetching...';
+            
+            // Try to fetch from LeetCode
+            const problemData = await LeetCodeFetcher.getProblemById(problemId);
+            
+            if (!problemData) {
+                showToast(`Could not find problem #${problemId} on LeetCode. Please enter details manually.`, 'warning');
+                return;
+            }
+            
+            // Fill the form with fetched data
+            document.getElementById('problemTitleInput').value = problemData.title;
+            document.getElementById('problemDescriptionInput').value = problemData.description;
+            
+            // Auto-generate keywords from tags if available
+            if (problemData.tags && problemData.tags.length > 0) {
+                const keywords = problemData.tags.join(', ');
+                document.getElementById('keywordsInput').value = keywords;
+            }
+            
+            // Set a placeholder for code
+            if (!document.getElementById('codeInput').value.trim()) {
+                document.getElementById('codeInput').value = `# Solution for LeetCode ${problemId}: ${problemData.title}\n# Add your solution code here\n\nclass Solution:\n    def solve(self):\n        pass`;
+            }
+            
+            showToast(`Fetched "${problemData.title}" from LeetCode!`, 'success');
+            
+            // Focus on description field for editing
+            document.getElementById('problemDescriptionInput').focus();
+            
+        } catch (error) {
+            console.error('Failed to fetch from LeetCode:', error);
+            showToast(`Failed to fetch problem #${problemId}. Please enter details manually.`, 'danger');
+        } finally {
+            // Restore button state
+            fetchBtn.disabled = false;
+            fetchBtn.innerHTML = originalText;
+        }
+    }
+    
     function setupEventListeners() {
+        // Fetch from LeetCode button
+        document.getElementById('fetchFromLeetCodeBtn').addEventListener('click', function() {
+            const problemId = parseInt(document.getElementById('problemIdInput').value);
+            fetchProblemFromLeetCode(problemId);
+        });
+        
         // Keyword search
         keywordSearch.addEventListener('input', function() {
             const searchTerm = this.value.toLowerCase();

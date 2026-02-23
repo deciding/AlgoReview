@@ -107,7 +107,13 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="problemIdInput" class="form-label">Problem ID (e.g., 1425)</label>
-                                    <input type="number" class="form-control" id="problemIdInput" required>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="problemIdInput" required>
+                                        <button type="button" class="btn btn-outline-primary" id="fetchFromLeetCodeBtn">
+                                            <i class="bi bi-cloud-download"></i> Fetch
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Click "Fetch" to auto-fill from LeetCode</small>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="problemTitleInput" class="form-label">Problem Title</label>
@@ -192,6 +198,7 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/data.js"></script>
+    <script src="js/leetcode-fetcher.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
