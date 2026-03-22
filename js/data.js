@@ -15290,11 +15290,15 @@ const PRIVACY_KEY = '0701';
     const urlParams = new URLSearchParams(window.location.search);
     const q = urlParams.get('q');
     
-    if (q === PRIVACY_KEY) {
-        // Privacy key matches - use hardcoded data
-        algoData.problems = algoData.problems; // Already has hardcoded data
-    } else {
-        // No valid key - clear problems to protect privacy
-        algoData.problems = [];
+    // Check if localStorage has existing data
+    const savedData = localStorage.getItem('algoReviewData');
+    
+    if (q === PRIVACY_KEY && !savedData) {
+        // Privacy key matches but localStorage is empty (first time)
+        // Save hardcoded data to localStorage
+        algoData.saveToLocalStorage();
     }
+    
+    // Load from localStorage (either user's saved data or hardcoded data we just saved)
+    algoData.loadFromLocalStorage();
 })();
