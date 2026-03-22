@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const keywordList = document.getElementById('keywordList');
     const keywordSearch = document.getElementById('keywordSearch');
+    const random10Btn = document.getElementById('random10Btn');
     const problemDetail = document.getElementById('problemDetail');
     const problemDetailPlaceholder = document.getElementById('problemDetailPlaceholder');
     const problemTitle = document.getElementById('problemTitle');
@@ -24,81 +25,62 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // State
     let currentProblemId = null;
-    let allKeywords = [];
+    let allProblems = [];
+    let isRandomMode = false;
     
     // Initialize
     init();
     
     function init() {
-        loadKeywords();
+        loadProblems();
         setupEventListeners();
     }
     
-    function loadKeywords() {
-        allKeywords = algoData.getAllKeywords();
-        renderKeywordList(allKeywords);
+    function loadProblems() {
+        allProblems = algoData.problems;
+        renderProblemList(allProblems);
     }
     
-    function renderKeywordList(keywords) {
+    function renderProblemList(problems, title = 'All Problems') {
         keywordList.innerHTML = '';
         
-        if (keywords.length === 0) {
+        if (isRandomMode) {
             keywordList.innerHTML = `
-                <div class="text-center py-4 text-muted">
-                    <i class="bi bi-tag display-6"></i>
-                    <p class="mt-2">No keywords found</p>
+                <div class="d-flex align-items-center mb-3">
+                    <button class="btn btn-outline-secondary btn-sm me-2" id="backToAllBtn">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <h5 class="mb-0">Random 10 Questions</h5>
                 </div>
             `;
-            return;
-        }
-        
-        keywords.forEach(keyword => {
-            const problems = algoData.getProblemsByKeyword(keyword);
-            const item = document.createElement('a');
-            item.href = '#';
-            item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
-            item.innerHTML = `
-                <div>
-                    <span class="keyword-tag me-2">${escapeHtml(keyword)}</span>
-                    <small class="text-muted">${problems.length} problem${problems.length !== 1 ? 's' : ''}</small>
-                </div>
-                <i class="bi bi-chevron-right"></i>
-            `;
-            
-            item.addEventListener('click', function(e) {
+            const backBtn = document.getElementById('backToAllBtn');
+            backBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                showProblemsByKeyword(keyword);
+                isRandomMode = false;
+                renderProblemList(allProblems);
             });
-            
-            keywordList.appendChild(item);
-        });
-    }
-    
-    function showProblemsByKeyword(keyword) {
-        const problems = algoData.getProblemsByKeyword(keyword);
-        
-        // Clear and show problem list
-        keywordList.innerHTML = `
-            <div class="d-flex align-items-center mb-3">
-                <button class="btn btn-outline-secondary btn-sm me-2" id="backToKeywordsBtn">
-                    <i class="bi bi-arrow-left"></i> Back
-                </button>
-                <h5 class="mb-0">Problems with keyword: <span class="badge bg-primary">${escapeHtml(keyword)}</span></h5>
-            </div>
-        `;
-        
-        const backBtn = document.getElementById('backToKeywordsBtn');
-        backBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            loadKeywords();
-            showProblemDetailPlaceholder();
-        });
+        } else if (problems !== allProblems) {
+            keywordList.innerHTML = `
+                <div class="d-flex align-items-center mb-3">
+                    <button class="btn btn-outline-secondary btn-sm me-2" id="backToAllBtn">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <h5 class="mb-0">Search Results: <span class="badge bg-primary">${escapeHtml(keywordSearch.value)}</span></h5>
+                </div>
+            `;
+            const backBtn = document.getElementById('backToAllBtn');
+            backBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                keywordSearch.value = '';
+                renderProblemList(allProblems);
+            });
+        }
         
         if (problems.length === 0) {
             keywordList.innerHTML += `
                 <div class="text-center py-4 text-muted">
-                    <i class="bi bi-question-circle display-6"></i>
-                    <p class="mt-2">No problems found with this keyword</p>
+                    <i class="bi bi-search display-6"></i>
+                    <p class="mt-2">No problems found</p>
                 </div>
             `;
             return;
@@ -145,7 +127,8 @@ document.addEventListener('DOMContentLoaded', function() {
             tag.className = 'keyword-tag';
             tag.textContent = keyword;
             tag.addEventListener('click', function() {
-                showProblemsByKeyword(keyword);
+                keywordSearch.value = keyword;
+                searchProblems();
             });
             problemKeywords.appendChild(tag);
         });
@@ -172,6 +155,29 @@ document.addEventListener('DOMContentLoaded', function() {
         currentProblemId = null;
     }
     
+    function searchProblems() {
+        const searchTerm = keywordSearch.value.toLowerCase().trim();
+        if (!searchTerm) {
+            isRandomMode = false;
+            renderProblemList(allProblems);
+            return;
+        }
+        
+        isRandomMode = false;
+        const filtered = allProblems.filter(problem => 
+            problem.title.toLowerCase().includes(searchTerm) ||
+            problem.description.toLowerCase().includes(searchTerm)
+        );
+        renderProblemList(filtered);
+    }
+    
+    function showRandom10() {
+        isRandomMode = true;
+        const shuffled = [...allProblems].sort(() => Math.random() - 0.5);
+        const random10 = shuffled.slice(0, Math.min(10, allProblems.length));
+        renderProblemList(random10);
+    }
+    
     // Fetch problem data from LeetCode
     async function fetchProblemFromLeetCode(problemId) {
         if (!problemId || problemId < 1) {
@@ -183,11 +189,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const originalText = fetchBtn.innerHTML;
         
         try {
-            // Show loading state
             fetchBtn.disabled = true;
             fetchBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Fetching...';
             
-            // Try to fetch from LeetCode
             const problemData = await LeetCodeFetcher.getProblemById(problemId);
             
             if (!problemData) {
@@ -195,31 +199,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Fill the form with fetched data
             document.getElementById('problemTitleInput').value = problemData.title;
             document.getElementById('problemDescriptionInput').value = problemData.description;
             
-            // Auto-generate keywords from tags if available
             if (problemData.tags && problemData.tags.length > 0) {
                 const keywords = problemData.tags.join(', ');
                 document.getElementById('keywordsInput').value = keywords;
             }
             
-            // Set a placeholder for code
             if (!document.getElementById('codeInput').value.trim()) {
                 document.getElementById('codeInput').value = `# Solution for LeetCode ${problemId}: ${problemData.title}\n# Add your solution code here\n\nclass Solution:\n    def solve(self):\n        pass`;
             }
             
             showToast(`Fetched "${problemData.title}" from LeetCode!`, 'success');
-            
-            // Focus on description field for editing
             document.getElementById('problemDescriptionInput').focus();
             
         } catch (error) {
             console.error('Failed to fetch from LeetCode:', error);
             showToast(`Failed to fetch problem #${problemId}. Please enter details manually.`, 'danger');
         } finally {
-            // Restore button state
             fetchBtn.disabled = false;
             fetchBtn.innerHTML = originalText;
         }
@@ -232,19 +230,11 @@ document.addEventListener('DOMContentLoaded', function() {
             fetchProblemFromLeetCode(problemId);
         });
         
-        // Keyword search
-        keywordSearch.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            if (!searchTerm) {
-                renderKeywordList(allKeywords);
-                return;
-            }
-            
-            const filtered = allKeywords.filter(keyword => 
-                keyword.toLowerCase().includes(searchTerm)
-            );
-            renderKeywordList(filtered);
-        });
+        // Search input
+        keywordSearch.addEventListener('input', searchProblems);
+        
+        // Random 10 button
+        random10Btn.addEventListener('click', showRandom10);
         
         // Edit problem button
         editProblemBtn.addEventListener('click', function() {
@@ -253,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const problem = algoData.getProblemById(currentProblemId);
             if (!problem) return;
             
-            // Populate edit form
             document.getElementById('editProblemId').value = problem.id;
             document.getElementById('editTitle').value = problem.title;
             document.getElementById('editDescription').value = problem.description;
@@ -275,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             algoData.updateProblem(id, updatedProblem);
             editModal.hide();
-            loadKeywords();
+            loadProblems();
             showProblemDetail(id);
             showToast('Problem updated successfully!', 'success');
         });
@@ -289,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (deleted) {
                 editModal.hide();
-                loadKeywords();
+                loadProblems();
                 showProblemDetailPlaceholder();
                 showToast('Problem deleted successfully!', 'success');
             }
@@ -308,15 +297,12 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             algoData.addProblem(problem);
-            loadKeywords();
+            loadProblems();
             
-            // Clear form
             addForm.reset();
             
-            // Show success message and scroll to new problem
             showToast('Problem added successfully!', 'success');
             
-            // Optionally show the new problem
             setTimeout(() => {
                 showProblemDetail(problem.id);
             }, 500);
@@ -329,7 +315,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function showToast(message, type = 'info') {
-        // Create toast element
         const toast = document.createElement('div');
         toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'info'} border-0`;
         toast.setAttribute('role', 'alert');
@@ -345,17 +330,14 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Add to container
         const container = document.createElement('div');
         container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
         container.appendChild(toast);
         document.body.appendChild(container);
         
-        // Initialize and show
         const bsToast = new bootstrap.Toast(toast);
         bsToast.show();
         
-        // Remove after hide
         toast.addEventListener('hidden.bs.toast', function() {
             container.remove();
         });
