@@ -154,3 +154,11 @@ code {
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
+
+/* Backup textarea */
+#exportDataArea, #importDataArea {
+    font-size: 12px;
+    white-space: pre;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}

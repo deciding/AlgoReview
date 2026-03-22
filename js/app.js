@@ -375,51 +375,57 @@ document.addEventListener('DOMContentLoaded', function() {
             addForm.reset();
         });
         
-        // Export data (download file)
-        document.getElementById('exportDataBtn').addEventListener('click', function() {
+        // Load export data on page load
+        const exportArea = document.getElementById('exportDataArea');
+        const importArea = document.getElementById('importDataArea');
+        const exportData = localStorage.getItem('algoReviewData');
+        if (exportData) {
+            exportArea.value = exportData;
+        }
+        
+        // Copy to clipboard
+        document.getElementById('copyDataBtn').addEventListener('click', function() {
             const data = localStorage.getItem('algoReviewData');
             if (!data) {
-                showToast('No data to export', 'warning');
+                showToast('No data to copy', 'warning');
                 return;
             }
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'algoreview-data.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('Data exported!', 'success');
+            exportArea.select();
+            exportArea.setSelectionRange(0, 99999);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(data).then(function() {
+                    showToast('Copied!', 'success');
+                }).catch(function() {
+                    document.execCommand('copy');
+                    showToast('Copied!', 'success');
+                });
+            } else {
+                document.execCommand('copy');
+                showToast('Copied!', 'success');
+            }
         });
         
-        // Import data (upload file)
+        // Import from textarea
         document.getElementById('importDataBtn').addEventListener('click', function() {
-            document.getElementById('importFileInput').click();
-        });
-        
-        document.getElementById('importFileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (!Array.isArray(data)) {
-                        throw new Error('Invalid format');
-                    }
-                    localStorage.setItem('algoReviewData', JSON.stringify(data));
-                    algoData.loadFromLocalStorage();
-                    loadData();
-                    showToast(`Imported ${data.length} problems!`, 'success');
-                } catch (err) {
-                    showToast('Invalid JSON file', 'danger');
+            const data = importArea.value.trim();
+            if (!data) {
+                showToast('Please paste backup data first', 'warning');
+                return;
+            }
+            try {
+                const parsed = JSON.parse(data);
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Invalid format');
                 }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
+                localStorage.setItem('algoReviewData', JSON.stringify(parsed));
+                algoData.loadFromLocalStorage();
+                loadData();
+                exportArea.value = localStorage.getItem('algoReviewData');
+                importArea.value = '';
+                showToast(`Imported ${parsed.length} problems!`, 'success');
+            } catch (err) {
+                showToast('Invalid JSON data', 'danger');
+            }
         });
     }
     
