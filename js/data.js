@@ -14486,7 +14486,7 @@ const algoData = {
                         if cnt == target and (right - left) > res:
                             res = (right - left)
         
-                        if left == len(nums): # or just put `update` outside
+                        if left == len(nums): # or just put \`update\` outside
                             break
                         cnt -= nums[left]
                         left += 1
