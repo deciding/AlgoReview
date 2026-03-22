@@ -6,12 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // DOM Elements
     const keywordList = document.getElementById('keywordList');
-    const keywordSearch = document.getElementById('keywordSearch');
+    const searchInput = document.getElementById('searchInput');
     const random10Btn = document.getElementById('random10Btn');
     const problemDetail = document.getElementById('problemDetail');
     const problemDetailPlaceholder = document.getElementById('problemDetailPlaceholder');
     const problemTitle = document.getElementById('problemTitle');
-    const problemId = document.getElementById('problemId');
+    const problemIdEl = document.getElementById('problemId');
     const problemDescription = document.getElementById('problemDescription');
     const problemKeywords = document.getElementById('problemKeywords');
     const problemCode = document.getElementById('problemCode');
@@ -26,66 +26,91 @@ document.addEventListener('DOMContentLoaded', function() {
     // State
     let currentProblemId = null;
     let allProblems = [];
-    let isRandomMode = false;
+    let allKeywords = [];
+    let currentView = 'keywords'; // 'keywords', 'search', 'random', 'keyword-filter'
     
     // Initialize
     init();
     
     function init() {
-        loadProblems();
+        loadData();
         setupEventListeners();
     }
     
-    function loadProblems() {
+    function loadData() {
         allProblems = algoData.problems;
-        renderProblemList(allProblems);
+        allKeywords = algoData.getAllKeywords();
+        renderKeywordList(allKeywords);
     }
     
-    function renderProblemList(problems, title = 'All Problems') {
+    function renderKeywordList(keywords) {
+        currentView = 'keywords';
         keywordList.innerHTML = '';
         
-        if (isRandomMode) {
+        if (keywords.length === 0) {
             keywordList.innerHTML = `
-                <div class="d-flex align-items-center mb-3">
-                    <button class="btn btn-outline-secondary btn-sm me-2" id="backToAllBtn">
-                        <i class="bi bi-arrow-left"></i> Back
-                    </button>
-                    <h5 class="mb-0">Random 10 Questions</h5>
-                </div>
-            `;
-            const backBtn = document.getElementById('backToAllBtn');
-            backBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                isRandomMode = false;
-                renderProblemList(allProblems);
-            });
-        } else if (problems !== allProblems) {
-            keywordList.innerHTML = `
-                <div class="d-flex align-items-center mb-3">
-                    <button class="btn btn-outline-secondary btn-sm me-2" id="backToAllBtn">
-                        <i class="bi bi-arrow-left"></i> Back
-                    </button>
-                    <h5 class="mb-0">Search Results: <span class="badge bg-primary">${escapeHtml(keywordSearch.value)}</span></h5>
-                </div>
-            `;
-            const backBtn = document.getElementById('backToAllBtn');
-            backBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                keywordSearch.value = '';
-                renderProblemList(allProblems);
-            });
-        }
-        
-        if (problems.length === 0) {
-            keywordList.innerHTML += `
                 <div class="text-center py-4 text-muted">
-                    <i class="bi bi-search display-6"></i>
-                    <p class="mt-2">No problems found</p>
+                    <i class="bi bi-tag display-6"></i>
+                    <p class="mt-2">No keywords found</p>
                 </div>
             `;
             return;
         }
         
+        keywords.forEach(keyword => {
+            const problems = algoData.getProblemsByKeyword(keyword);
+            const item = document.createElement('a');
+            item.href = '#';
+            item.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+            item.innerHTML = `
+                <div>
+                    <span class="keyword-tag me-2">${escapeHtml(keyword)}</span>
+                    <small class="text-muted">${problems.length} problem${problems.length !== 1 ? 's' : ''}</small>
+                </div>
+                <i class="bi bi-chevron-right"></i>
+            `;
+            
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                showProblemsByKeyword(keyword);
+            });
+            
+            keywordList.appendChild(item);
+        });
+    }
+    
+    function showProblemsByKeyword(keyword) {
+        currentView = 'keyword-filter';
+        const problems = algoData.getProblemsByKeyword(keyword);
+        
+        keywordList.innerHTML = `
+            <div class="d-flex align-items-center mb-3">
+                <button class="btn btn-outline-secondary btn-sm me-2" id="backToKeywordsBtn">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <h5 class="mb-0">Keyword: <span class="badge bg-primary">${escapeHtml(keyword)}</span></h5>
+            </div>
+        `;
+        
+        document.getElementById('backToKeywordsBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            renderKeywordList(allKeywords);
+        });
+        
+        if (problems.length === 0) {
+            keywordList.innerHTML += `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-question-circle display-6"></i>
+                    <p class="mt-2">No problems found with this keyword</p>
+                </div>
+            `;
+            return;
+        }
+        
+        renderProblemItems(problems);
+    }
+    
+    function renderProblemItems(problems) {
         problems.forEach(problem => {
             const item = document.createElement('a');
             item.href = '#';
@@ -94,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
                         <h6 class="mb-1">${problem.id}. ${escapeHtml(problem.title)}</h6>
-                        <p class="mb-1 text-muted small">${escapeHtml(problem.description.substring(0, 100))}...</p>
+                        <p class="mb-1 text-muted small">${escapeHtml(problem.description.substring(0, 80))}...</p>
                     </div>
                     <i class="bi bi-chevron-right text-muted"></i>
                 </div>
@@ -109,41 +134,88 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    function renderSearchResults(results, searchTerm) {
+        currentView = 'search';
+        keywordList.innerHTML = `
+            <div class="d-flex align-items-center mb-3">
+                <button class="btn btn-outline-secondary btn-sm me-2" id="backToKeywordsBtn">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <h5 class="mb-0">Results for: <span class="badge bg-primary">${escapeHtml(searchTerm)}</span> (${results.length})</h5>
+            </div>
+        `;
+        
+        document.getElementById('backToKeywordsBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            searchInput.value = '';
+            renderKeywordList(allKeywords);
+        });
+        
+        if (results.length === 0) {
+            keywordList.innerHTML += `
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-search display-6"></i>
+                    <p class="mt-2">No problems found</p>
+                </div>
+            `;
+            return;
+        }
+        
+        renderProblemItems(results);
+    }
+    
+    function showRandom10() {
+        currentView = 'random';
+        const shuffled = [...allProblems].sort(() => Math.random() - 0.5);
+        const random10 = shuffled.slice(0, Math.min(10, allProblems.length));
+        
+        keywordList.innerHTML = `
+            <div class="d-flex align-items-center mb-3">
+                <button class="btn btn-outline-secondary btn-sm me-2" id="backToKeywordsBtn">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+                <h5 class="mb-0">Random 10 Questions</h5>
+            </div>
+        `;
+        
+        document.getElementById('backToKeywordsBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            renderKeywordList(allKeywords);
+        });
+        
+        renderProblemItems(random10);
+    }
+    
     function showProblemDetail(problemId) {
         const problem = algoData.getProblemById(problemId);
         if (!problem) return;
         
         currentProblemId = problemId;
         
-        // Update UI
         problemTitle.textContent = `${problem.id}. ${problem.title}`;
-        problemId.textContent = `LeetCode #${problem.id}`;
+        problemIdEl.textContent = `LeetCode #${problem.id}`;
         problemDescription.innerHTML = problem.description;
         
-        // Render keywords
         problemKeywords.innerHTML = '';
         problem.keywords.forEach(keyword => {
             const tag = document.createElement('span');
             tag.className = 'keyword-tag';
             tag.textContent = keyword;
-            tag.addEventListener('click', function() {
-                keywordSearch.value = keyword;
-                searchProblems();
+            tag.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showProblemsByKeyword(keyword);
             });
             problemKeywords.appendChild(tag);
         });
         
-        // Render code
         problemCode.textContent = problem.code;
         
-        // Show detail, hide placeholder
         problemDetail.classList.remove('d-none');
         problemDetailPlaceholder.classList.add('d-none');
         
-        // Update code highlighting
         hljs.highlightElement(problemCode);
         
-        // Scroll to detail if on mobile
         if (window.innerWidth < 768) {
             problemDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
@@ -156,26 +228,17 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function searchProblems() {
-        const searchTerm = keywordSearch.value.toLowerCase().trim();
+        const searchTerm = searchInput.value.toLowerCase().trim();
         if (!searchTerm) {
-            isRandomMode = false;
-            renderProblemList(allProblems);
+            renderKeywordList(allKeywords);
             return;
         }
         
-        isRandomMode = false;
-        const filtered = allProblems.filter(problem => 
+        const results = allProblems.filter(problem => 
             problem.title.toLowerCase().includes(searchTerm) ||
             problem.description.toLowerCase().includes(searchTerm)
         );
-        renderProblemList(filtered);
-    }
-    
-    function showRandom10() {
-        isRandomMode = true;
-        const shuffled = [...allProblems].sort(() => Math.random() - 0.5);
-        const random10 = shuffled.slice(0, Math.min(10, allProblems.length));
-        renderProblemList(random10);
+        renderSearchResults(results, searchTerm);
     }
     
     // Fetch problem data from LeetCode
@@ -203,8 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('problemDescriptionInput').value = problemData.description;
             
             if (problemData.tags && problemData.tags.length > 0) {
-                const keywords = problemData.tags.join(', ');
-                document.getElementById('keywordsInput').value = keywords;
+                document.getElementById('keywordsInput').value = problemData.tags.join(', ');
             }
             
             if (!document.getElementById('codeInput').value.trim()) {
@@ -231,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Search input
-        keywordSearch.addEventListener('input', searchProblems);
+        searchInput.addEventListener('input', searchProblems);
         
         // Random 10 button
         random10Btn.addEventListener('click', showRandom10);
@@ -264,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             algoData.updateProblem(id, updatedProblem);
             editModal.hide();
-            loadProblems();
+            loadData();
             showProblemDetail(id);
             showToast('Problem updated successfully!', 'success');
         });
@@ -278,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (deleted) {
                 editModal.hide();
-                loadProblems();
+                loadData();
                 showProblemDetailPlaceholder();
                 showToast('Problem deleted successfully!', 'success');
             }
@@ -297,7 +359,7 @@ document.addEventListener('DOMContentLoaded', function() {
             };
             
             algoData.addProblem(problem);
-            loadProblems();
+            loadData();
             
             addForm.reset();
             
