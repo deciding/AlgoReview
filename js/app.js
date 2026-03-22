@@ -375,49 +375,53 @@ document.addEventListener('DOMContentLoaded', function() {
             addForm.reset();
         });
         
-        // Export data
-        document.getElementById('exportDataBtn').addEventListener('click', function() {
+        // Load export data on page load
+        const exportArea = document.getElementById('exportDataArea');
+        const data = localStorage.getItem('algoReviewData');
+        if (data) {
+            exportArea.value = data;
+        }
+        
+        // Copy to clipboard
+        document.getElementById('copyDataBtn').addEventListener('click', function() {
             const data = localStorage.getItem('algoReviewData');
             if (!data) {
-                showToast('No data to export', 'warning');
+                showToast('No data to copy', 'warning');
                 return;
             }
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'algoreview-data.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Data exported successfully!', 'success');
+            navigator.clipboard.writeText(data).then(function() {
+                showToast('Copied to clipboard!', 'success');
+            }).catch(function() {
+                exportArea.select();
+                document.execCommand('copy');
+                showToast('Copied to clipboard!', 'success');
+            });
         });
         
-        // Import data
+        // Import from textarea
         document.getElementById('importDataBtn').addEventListener('click', function() {
-            document.getElementById('importFileInput').click();
-        });
-        
-        document.getElementById('importFileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+            const importArea = document.getElementById('importDataArea');
+            const data = importArea.value.trim();
             
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const data = JSON.parse(event.target.result);
-                    if (!Array.isArray(data)) {
-                        throw new Error('Invalid data format');
-                    }
-                    localStorage.setItem('algoReviewData', JSON.stringify(data));
-                    algoData.loadFromLocalStorage();
-                    loadData();
-                    showToast(`Imported ${data.length} problems successfully!`, 'success');
-                } catch (err) {
-                    showToast('Failed to import: Invalid JSON file', 'danger');
+            if (!data) {
+                showToast('Please paste your backup data first', 'warning');
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(data);
+                if (!Array.isArray(parsed)) {
+                    throw new Error('Invalid format');
                 }
-            };
-            reader.readAsText(file);
-            e.target.value = '';
+                localStorage.setItem('algoReviewData', JSON.stringify(parsed));
+                algoData.loadFromLocalStorage();
+                loadData();
+                importArea.value = '';
+                exportArea.value = localStorage.getItem('algoReviewData');
+                showToast(`Imported ${parsed.length} problems!`, 'success');
+            } catch (err) {
+                showToast('Invalid JSON data', 'danger');
+            }
         });
     }
     
