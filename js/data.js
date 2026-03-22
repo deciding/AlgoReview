@@ -15282,5 +15282,19 @@ const algoData = {
     }
 };
 
-// Initialize: Load from localStorage on startup
-algoData.loadFromLocalStorage();
+// Privacy key for loading data (change this to your desired key)
+const PRIVACY_KEY = '0701';
+
+// Initialize: Check URL for privacy key, then load data
+(function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const q = urlParams.get('q');
+    
+    if (q === PRIVACY_KEY) {
+        // Privacy key matches - load hardcoded data into localStorage
+        algoData.saveToLocalStorage();
+    }
+    
+    // Load from localStorage (either user's saved data or hardcoded data)
+    algoData.loadFromLocalStorage();
+})();
