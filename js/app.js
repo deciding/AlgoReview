@@ -375,63 +375,51 @@ document.addEventListener('DOMContentLoaded', function() {
             addForm.reset();
         });
         
-        // Load export data on page load
-        const exportArea = document.getElementById('exportDataArea');
-        const data = localStorage.getItem('algoReviewData');
-        if (data) {
-            exportArea.value = data;
-        }
-        
-        // Copy to clipboard
-        document.getElementById('copyDataBtn').addEventListener('click', function() {
+        // Export data (download file)
+        document.getElementById('exportDataBtn').addEventListener('click', function() {
             const data = localStorage.getItem('algoReviewData');
             if (!data) {
-                showToast('No data to copy', 'warning');
+                showToast('No data to export', 'warning');
                 return;
             }
-            
-            // Try clipboard API first
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(data).then(function() {
-                    showToast('Copied!', 'success');
-                }).catch(function() {
-                    // Fallback: select text
-                    exportArea.focus();
-                    exportArea.select();
-                    showToast('Select all and copy manually', 'info');
-                });
-            } else {
-                // Fallback for older browsers
-                exportArea.focus();
-                exportArea.select();
-                showToast('Select all and copy manually', 'info');
-            }
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'algoreview-data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Data exported!', 'success');
         });
         
-        // Import from textarea
+        // Import data (upload file)
         document.getElementById('importDataBtn').addEventListener('click', function() {
-            const importArea = document.getElementById('importDataArea');
-            const data = importArea.value.trim();
+            document.getElementById('importFileInput').click();
+        });
+        
+        document.getElementById('importFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
             
-            if (!data) {
-                showToast('Please paste your backup data first', 'warning');
-                return;
-            }
-            
-            try {
-                const parsed = JSON.parse(data);
-                if (!Array.isArray(parsed)) {
-                    throw new Error('Invalid format');
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (!Array.isArray(data)) {
+                        throw new Error('Invalid format');
+                    }
+                    localStorage.setItem('algoReviewData', JSON.stringify(data));
+                    algoData.loadFromLocalStorage();
+                    loadData();
+                    showToast(`Imported ${data.length} problems!`, 'success');
+                } catch (err) {
+                    showToast('Invalid JSON file', 'danger');
                 }
-                localStorage.setItem('algoReviewData', JSON.stringify(parsed));
-                algoData.loadFromLocalStorage();
-                loadData();
-                importArea.value = '';
-                exportArea.value = localStorage.getItem('algoReviewData');
-                showToast(`Imported ${parsed.length} problems!`, 'success');
-            } catch (err) {
-                showToast('Invalid JSON data', 'danger');
-            }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
         });
     }
     
