@@ -389,13 +389,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 showToast('No data to copy', 'warning');
                 return;
             }
-            navigator.clipboard.writeText(data).then(function() {
-                showToast('Copied to clipboard!', 'success');
-            }).catch(function() {
+            
+            // Try clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(data).then(function() {
+                    showToast('Copied!', 'success');
+                }).catch(function() {
+                    // Fallback: select text
+                    exportArea.focus();
+                    exportArea.select();
+                    showToast('Select all and copy manually', 'info');
+                });
+            } else {
+                // Fallback for older browsers
+                exportArea.focus();
                 exportArea.select();
-                document.execCommand('copy');
-                showToast('Copied to clipboard!', 'success');
-            });
+                showToast('Select all and copy manually', 'info');
+            }
         });
         
         // Import from textarea

@@ -154,3 +154,19 @@ code {
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
+
+/* Export/Import textarea */
+#exportDataArea, #importDataArea {
+    font-size: 11px;
+    min-height: 100px;
+    overflow-x: auto;
+    white-space: pre;
+    word-break: break-all;
+    -webkit-user-select: text;
+    user-select: text;
+}
+
+/* Mobile toast fix */
+.toast-container {
+    z-index: 9999 !important;
+}
