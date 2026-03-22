@@ -74,6 +74,9 @@ pre {
     border-radius: 8px;
     overflow-x: auto;
     max-height: 400px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 code {
