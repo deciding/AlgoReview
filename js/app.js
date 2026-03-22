@@ -374,6 +374,51 @@ document.addEventListener('DOMContentLoaded', function() {
         clearFormBtn.addEventListener('click', function() {
             addForm.reset();
         });
+        
+        // Export data
+        document.getElementById('exportDataBtn').addEventListener('click', function() {
+            const data = localStorage.getItem('algoReviewData');
+            if (!data) {
+                showToast('No data to export', 'warning');
+                return;
+            }
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'algoreview-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Data exported successfully!', 'success');
+        });
+        
+        // Import data
+        document.getElementById('importDataBtn').addEventListener('click', function() {
+            document.getElementById('importFileInput').click();
+        });
+        
+        document.getElementById('importFileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    if (!Array.isArray(data)) {
+                        throw new Error('Invalid data format');
+                    }
+                    localStorage.setItem('algoReviewData', JSON.stringify(data));
+                    algoData.loadFromLocalStorage();
+                    loadData();
+                    showToast(`Imported ${data.length} problems successfully!`, 'success');
+                } catch (err) {
+                    showToast('Failed to import: Invalid JSON file', 'danger');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
     }
     
     function showToast(message, type = 'info') {
