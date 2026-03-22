@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update UI
         problemTitle.textContent = `${problem.id}. ${problem.title}`;
         problemId.textContent = `LeetCode #${problem.id}`;
-        problemDescription.textContent = problem.description;
+        problemDescription.innerHTML = problem.description;
         
         // Render keywords
         problemKeywords.innerHTML = '';
