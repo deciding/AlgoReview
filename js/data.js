@@ -1,13 +1,12 @@
 // AlgoReview Data Structure
 // This file contains the algorithm problems and their mappings
 
-const algoData = {
-    // Array of problem objects
-    problems: [
-        {
-            id: 1,
-            title: "Two Sum",
-            description: `Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.`,
+// Hardcoded problems (only loaded with valid privacy key)
+const HARDCODED_PROBLEMS = [
+    {
+        id: 1,
+        title: "Two Sum",
+        description: `Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.`,
             keywords: ["nSum"],
             code: `        # Solution for LeetCode 1: Two Sum
         # Add your solution code here
@@ -15187,7 +15186,12 @@ const algoData = {
                     `,
             language: "python"
         }
-    ],
+    ];
+
+// Main data store (starts empty, populated from localStorage or seeded)
+const algoData = {
+    // Array of problem objects
+    problems: [],
     
     // Get all unique keywords from problems
     getAllKeywords: function() {
@@ -15290,15 +15294,15 @@ const PRIVACY_KEY = '0701';
     const urlParams = new URLSearchParams(window.location.search);
     const q = urlParams.get('q');
     
-    // Check if localStorage has existing data
     const savedData = localStorage.getItem('algoReviewData');
     
     if (q === PRIVACY_KEY && !savedData) {
         // Privacy key matches but localStorage is empty (first time)
-        // Save hardcoded data to localStorage
-        algoData.saveToLocalStorage();
+        // Seed hardcoded data to localStorage and use it
+        algoData.problems = HARDCODED_PROBLEMS;
+        localStorage.setItem('algoReviewData', JSON.stringify(algoData.problems));
+    } else {
+        // Otherwise load from localStorage (user's data or empty)
+        algoData.loadFromLocalStorage();
     }
-    
-    // Load from localStorage (either user's saved data or hardcoded data we just saved)
-    algoData.loadFromLocalStorage();
 })();
