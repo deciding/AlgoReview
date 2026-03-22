@@ -21,12 +21,7 @@ def make_links_clickable(text):
 
 def format_code(code):
     if code:
-        code = code.replace("`", "\\`")
-        lines = code.split("\n")
-        formatted = []
-        for line in lines:
-            formatted.append(f"        {line}")
-        return "\n".join(formatted)
+        return code.replace("`", "\\`")
     return ""
 
 
