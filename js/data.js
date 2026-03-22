@@ -15285,16 +15285,16 @@ const algoData = {
 // Privacy key for loading data (change this to your desired key)
 const PRIVACY_KEY = '0701';
 
-// Initialize: Check URL for privacy key, then load data
+// Initialize: Check URL for privacy key
 (function init() {
     const urlParams = new URLSearchParams(window.location.search);
     const q = urlParams.get('q');
     
     if (q === PRIVACY_KEY) {
-        // Privacy key matches - load hardcoded data into localStorage
-        algoData.saveToLocalStorage();
+        // Privacy key matches - use hardcoded data
+        algoData.problems = algoData.problems; // Already has hardcoded data
+    } else {
+        // No valid key - clear problems to protect privacy
+        algoData.problems = [];
     }
-    
-    // Load from localStorage (either user's saved data or hardcoded data)
-    algoData.loadFromLocalStorage();
 })();
